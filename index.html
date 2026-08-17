@@ -11,7 +11,7 @@
 .wrap{max-width:560px;margin:auto;padding:14px}.card{background:#fff;border-radius:20px;padding:20px;margin:10px 0;box-shadow:0 5px 24px #0001}
 .logo{width:140px;display:block;margin:4px auto 16px}h1{font-size:27px;text-align:center;margin:0 0 8px}h2{font-size:21px;line-height:1.25}.muted{color:var(--muted);font-size:14px;line-height:1.4}
 label{font-weight:750;display:block;margin:13px 0 6px}input,select,textarea{width:100%;padding:13px;border:1px solid #d0d5dd;border-radius:11px;font-size:16px;background:white}
-button{width:100%;padding:14px;border:0;border-radius:12px;background:var(--b);color:#fff;font-size:16px;font-weight:800;margin-top:10px}button.secondary{background:#eef2ff;color:var(--b)}button.danger{background:var(--danger)}button.option{background:#f8fafc;color:var(--ink);border:2px solid #e2e8f0;text-align:left;display:flex;align-items:center;gap:14px} .mono{width:48px;height:48px;object-fit:contain;flex:0 0 48px} .option span{flex:1}button.option.selected{border-color:var(--b);background:#eef5ff}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:var(--b);color:#fff;font-size:16px;font-weight:800;margin-top:10px}button.secondary{background:#eef2ff;color:var(--b)}button.danger{background:var(--danger)}button.option{background:#f8fafc;color:var(--ink);border:2px solid #e2e8f0;text-align:left;display:flex;align-items:center;gap:14px} .mono{width:34px;height:34px;object-fit:contain;flex:0 0 34px} .option span{flex:1}button.option.selected{border-color:var(--b);background:#eef5ff}
 .top{display:flex;justify-content:space-between;font-weight:750}.progress{height:7px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:12px 0 18px}.bar{height:100%;background:var(--b)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#f8fafc;border-radius:14px;padding:13px;margin-top:10px}.big{font-size:28px;font-weight:850}
 table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:9px 4px;border-bottom:1px solid #eaecf0;text-align:left}
@@ -45,11 +45,11 @@ function load(){
  try{cfg=JSON.parse(localStorage.getItem("sncta_cfg"))||{count:40}}catch(e){cfg={count:40}}
 }
 function save(){localStorage.setItem("sncta_bank",JSON.stringify(bank));localStorage.setItem("sncta_centers",JSON.stringify(centers));localStorage.setItem("sncta_cfg",JSON.stringify(cfg))}
-function render(x){document.getElementById("app").innerHTML=x;scrollTo(0,0)}
+function render(x,goTop=true){document.getElementById("app").innerHTML=x;if(goTop)scrollTo(0,0)}
 function home(){
  load();let active=bank.filter(q=>q.active!==false).length;
  render(`<div class="card"><img class="logo" src="${LOGO}"><span class="badge">VERSION MOBILE — TEST</span>
- <h1 style="margin-top:10px">Grand Quiz SNCTA</h1><p class="muted">Banque active : ${active} questions. Nombre actuel du quiz : ${cfg.count}.</p>
+ <h1 style="margin-top:10px">Grand Quiz SNCTA</h1>
  <label>Pseudo</label><input id="nick" maxlength="30" placeholder="Ex. Simon">
  <label>Région <span class="muted">(facultatif)</span></label><select id="region"><option value="">Je ne souhaite pas répondre</option><option>Bretagne</option><option>Île-de-France</option><option>Grand Est</option><option>Provence-Alpes-Côte d’Azur</option><option>Nouvelle-Aquitaine</option></select>
  <label>Centre <span class="muted">(facultatif)</span></label><select id="center"><option value="">Je ne souhaite pas répondre</option>${centers.filter(c=>c.active!==false).map(c=>`<option>${esc(c.name)}</option>`).join("")}</select>
@@ -86,21 +86,37 @@ function renderAdmin(){
  let active=bank.filter(q=>q.active!==false).length;
  render(`<div class="card"><span class="badge">ADMIN — TEST</span><h1>Administration</h1>
  <label>Nombre de questions du quiz</label><input id="count" type="number" min="1" step="1" value="${cfg.count}">
- <p class="muted">Maximum actuel : <b>${active}</b> question${active>1?"s":""} actives. Le nombre saisi ne pourra pas dépasser ce maximum.</p>
- <button onclick="saveCount()">Enregistrer</button><button class="secondary" onclick="home()">Retour au quiz</button></div>
- <div class="card"><h2>Banque de questions</h2><p class="muted">${bank.length} au total — ${active} actives.</p><button onclick="editQ(-1)">➕ Ajouter une question</button><div id="qlist">${bank.map((q,i)=>qCard(q,i)).join("")}</div></div>
- <div class="card"><h2>Centres</h2><p class="muted">Base actuelle : 5 CRNA. Ajout, retrait et modification disponibles.</p><button onclick="editC(-1)">➕ Ajouter un centre</button><div id="clist">${centers.map((c,i)=>cCard(c,i)).join("")}</div></div>`)
+ <p class="muted">Maximum actuel : <b>${active}</b> question${active>1?"s":""} actives.</p>
+ <button onclick="saveCount()">Enregistrer</button>
+ <button class="secondary" onclick="showQuestionBank()">📚 Banque de questions</button>
+ <button class="secondary" onclick="showCenters()">📍 Centres & régions</button>
+ <button class="secondary" onclick="home()">Retour au quiz</button></div>`)
+}
+function showQuestionBank(){
+ let active=bank.filter(q=>q.active!==false).length;
+ render(`<div class="card"><span class="badge">ADMIN</span><h1>Banque de questions</h1>
+ <p class="muted">${bank.length} questions au total — ${active} actives.</p>
+ <button onclick="editQ(-1)">➕ Ajouter une question</button>
+ <button class="secondary" onclick="renderAdmin()">← Retour au menu admin</button></div>
+ <div class="card"><div id="qlist">${bank.map((q,i)=>qCard(q,i)).join("")}</div></div>`)
+}
+function showCenters(){
+ render(`<div class="card"><span class="badge">ADMIN</span><h1>Centres & régions</h1>
+ <p class="muted">Base actuelle : 5 CRNA. Ajout, retrait et modification disponibles.</p>
+ <button onclick="editC(-1)">➕ Ajouter un centre</button>
+ <button class="secondary" onclick="renderAdmin()">← Retour au menu admin</button></div>
+ <div class="card"><div id="clist">${centers.map((c,i)=>cCard(c,i)).join("")}</div></div>`)
 }
 function saveCount(){let active=bank.filter(q=>q.active!==false).length,n=Math.floor(Number(document.getElementById("count").value));if(!n||n<1){alert("Entre un nombre entier supérieur à 0.");return}if(n>active){alert("Le maximum actuel est "+active+".");return}cfg.count=n;save();alert("Nombre enregistré : "+n);renderAdmin()}
 function qCard(q,i){return `<div class="q ${q.active===false?"off":""}"><b>#${i+1}</b> — ${esc(q.question)}<br><span class="muted">Bonne réponse : ${esc((q.options.find(o=>o.value===q.correct)||{}).label||"—")}</span><br><button onclick="editQ(${i})">Modifier</button><button class="secondary" onclick="toggleQ(${i})">${q.active===false?"Réactiver":"Désactiver"}</button><button class="danger" onclick="delQ(${i})">Supprimer</button></div>`}
 function editQ(i){let q=i>=0?bank[i]:{question:"",options:[{label:"",value:"A"},{label:"",value:"B"},{label:"",value:"C"},{label:"",value:"D"}],correct:"A",active:true};render(`<div class="card"><h1>${i<0?"Ajouter":"Modifier"} une question</h1><label>Question</label><textarea id="qq" rows="3">${esc(q.question)}</textarea>${q.options.map((o,j)=>`<label>Réponse ${String.fromCharCode(65+j)}</label><input id="o${j}" value="${esc(o.label)}">`).join("")}<label>Bonne réponse</label><select id="corr">${q.options.map((o,j)=>`<option value="${o.value}" ${o.value===q.correct?"selected":""}>${String.fromCharCode(65+j)}</option>`).join("")}</select><button onclick="saveQ(${i})">Enregistrer</button><button class="secondary" onclick="renderAdmin()">Annuler</button></div>`)}
 function saveQ(i){let question=document.getElementById("qq").value.trim(),options=[0,1,2,3].map(j=>({label:document.getElementById("o"+j).value.trim(),value:String.fromCharCode(65+j)}));if(!question||options.some(o=>!o.label)){alert("Renseigne la question et les 4 réponses.");return}let q={question,options,correct:document.getElementById("corr").value,active:true};i<0?bank.push(q):bank[i]=q;save();renderAdmin()}
-function toggleQ(i){bank[i].active=bank[i].active===false;save();renderAdmin()}
+function toggleQ(i){const y=window.scrollY;bank[i].active=bank[i].active===false;save();showQuestionBank();requestAnimationFrame(()=>scrollTo(0,y))}
 function delQ(i){if(confirm("Supprimer définitivement cette question ?")){bank.splice(i,1);save();renderAdmin()}}
 function cCard(c,i){return `<div class="q ${c.active===false?"off":""}"><b>${esc(c.name)}</b><br><span class="muted">${esc(c.dept||"")} — ${esc(c.region||"")}</span><br><button onclick="editC(${i})">Modifier</button><button class="secondary" onclick="toggleC(${i})">${c.active===false?"Réactiver":"Désactiver"}</button><button class="danger" onclick="delC(${i})">Supprimer</button></div>`}
 function editC(i){let c=i>=0?centers[i]:{name:"",type:"Centre",dept:"",region:"",active:true};render(`<div class="card"><h1>${i<0?"Ajouter":"Modifier"} un centre</h1><label>Nom</label><input id="cn" value="${esc(c.name)}"><label>Type</label><input id="ct" value="${esc(c.type)}"><label>Département</label><input id="cd" value="${esc(c.dept)}"><label>Région</label><input id="cr" value="${esc(c.region)}"><button onclick="saveC(${i})">Enregistrer</button><button class="secondary" onclick="renderAdmin()">Annuler</button></div>`)}
 function saveC(i){let c={name:document.getElementById("cn").value.trim(),type:document.getElementById("ct").value.trim()||"Centre",dept:document.getElementById("cd").value.trim(),region:document.getElementById("cr").value.trim(),active:true};if(!c.name){alert("Le nom est obligatoire.");return}i<0?centers.push(c):centers[i]=c;save();renderAdmin()}
-function toggleC(i){centers[i].active=centers[i].active===false;save();renderAdmin()}
+function toggleC(i){const y=window.scrollY;centers[i].active=centers[i].active===false;save();showCenters();requestAnimationFrame(()=>scrollTo(0,y))}
 function delC(i){if(confirm("Supprimer ce centre ?")){centers.splice(i,1);save();renderAdmin()}}
 load();save();home();
 </script></body></html>
